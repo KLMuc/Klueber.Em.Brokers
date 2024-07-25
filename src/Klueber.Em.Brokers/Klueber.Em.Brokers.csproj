@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net471;net48;netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>Tino Kuehnel</Authors>
+		<Company>Klüber Lubrication München GmbH &amp; Co. KG</Company>
+		<Description>Brokers Integration</Description>
+		<PackageReadmeFile>ReadMe.md</PackageReadmeFile>
+    <PackageIcon>broker.png</PackageIcon>
+    <Version>$(PackageVersion)</Version>
+
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <PackageProjectUrl>https://github.com/KLMuc/Klueber.Em.Brokers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/KLMuc/Klueber.Em.Brokers</RepositoryUrl>
+		<RepositoryType>Github</RepositoryType>
+
+		<PackageReleaseNotes></PackageReleaseNotes>
+		
+    <Title>Em Brokers</Title>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
+    <ReadLinesFromFile File="docs/Release-Notes.txt">
+      <Output TaskParameter="Lines" ItemName="ReleaseNoteLines" />
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
+    </PropertyGroup>
+  </Target>
+
+  <ItemGroup>
+    <None Include="..\..\ReadMe.md" Link="docs\ReadMe.md" Pack="true" PackagePath="\" />
+    <None Include="docs\broker.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net48'">
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+
+</Project>

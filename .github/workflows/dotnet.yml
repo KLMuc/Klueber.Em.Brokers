@@ -1,0 +1,50 @@
+name: .Net
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check Out
+      uses: actions/checkout@v4
+    - name: Setup .Net
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    - name: Restore
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Tests
+      run: dotnet test --no-restore --verbosity minimal --configuration Release --collect "XPlat Code Coverage" /p:CollectCodeCoverage=true --settings CodeCoverage.runsettings --results-directory "CoberturaTestResults-${{ env.DOTNET_VERSION }}"
+    
+    - name: Report Generation
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.3.8
+      with:
+        reports: './**/*cobertura.xml'
+        targetdir: 'coveragereport' 
+        reporttypes: 'HtmlInline;Cobertura;MarkdownSummaryGithub'
+        assemblyfilters: '+*'
+        classfilters: '+*'
+        filefilters: '+*;-*Migrations*'
+        verbosity: 'Info'
+        tag: '${{ github.run_number }}_${{ github.run_id }}'
+        toolpath: 'reportgeneratortool'
+    
+    - name: Upload coverage report artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CoverageReport # Artifact name        
+        path: coveragereport # Directory containing files to upload
+   
+    - name: Publish coverage in build summary 
+      run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY # Adjust path and filename if necessary
+      shell: bash

@@ -1,0 +1,79 @@
+name: Release Created
+
+on:
+  release:
+    types: [published]
+    tags:
+      - 'v*'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - id: get_version
+      uses: battila7/get-version-action@v2
+    - run: echo ${{ steps.get_version.outputs.version-without-v }}
+
+    - name: Check Out
+      uses: actions/checkout@v4
+   
+    - name: Setup .Net
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    - name: Restore
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Tests
+      run: dotnet test --no-restore --verbosity minimal --configuration Release --collect "XPlat Code Coverage" /p:CollectCodeCoverage=true --settings CodeCoverage.runsettings --results-directory "CoberturaTestResults-${{ env.DOTNET_VERSION }}"
+    
+    - name: Report Generation
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.3.8
+      with:
+        reports: './**/*cobertura.xml' 
+        targetdir: 'coveragereport' 
+        reporttypes: 'HtmlInline;Cobertura;MarkdownSummaryGithub'
+        assemblyfilters: '+*'
+        classfilters: '+*' 
+        filefilters: '+*;-*Migrations*'
+        verbosity: 'Info' 
+        tag: '${{ github.run_number }}_${{ github.run_id }}' 
+        toolpath: 'reportgeneratortool' 
+        
+    - name: Upload coverage report artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CoverageReport # Artifact name        
+        path: coveragereport # Directory containing files to upload
+    
+    - name: Publish coverage in build summary 
+      run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY # Adjust path and filename if necessary
+      shell: bash
+
+    - name: Create Package
+      run: dotnet pack ./src/Klueber.Em.Brokers/Klueber.Em.Brokers.csproj -v minimal --configuration Release -o:nupkg -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }}
+    - name: Publish package on GitHub registry
+      env: 
+        NUGET_API_KEY: ${{ secrets.GH_PAT }}
+      run: dotnet nuget push nupkg/*.nupkg -k $NUGET_API_KEY -s https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
+        
+    - name: Add Package to Build Artifacts
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: Artifacts
+        path: ./nupkg/*.nupkg
+    
+    - name: Add Package to Release Asset (NuGet Package)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: nupkg/Klueber.Em.Brokers.${{ steps.get_version.outputs.version-without-v }}.nupkg
+        asset_name: Klueber.Em.Brokers.${{ steps.get_version.outputs.version-without-v }}.nupkg
+        asset_content_type: application/zip
