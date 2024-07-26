@@ -1,4 +1,5 @@
-﻿using Klueber.Em.Brokers.Brokers.Apis;
+﻿using System.Linq.Expressions;
+using Klueber.Em.Brokers.Brokers.Apis;
 using Klueber.Em.Brokers.Brokers.Loggings;
 using Klueber.Em.Brokers.Models.ApiModels.Subscription;
 using Klueber.Em.Brokers.Models.ApiModels.Tenant;
@@ -23,7 +24,11 @@ namespace Klueber.Em.Brokers.Tests.Services
                 apiBrokerMock.Object,
                 loggingBrokerMock.Object);
         }
-
+        private static Expression<Func<Exception, bool>> SameExceptionAs(Exception expectedException)
+        {
+            return actualException => actualException.Message == expectedException.Message
+                                      && actualException.InnerException.Message == expectedException.InnerException.Message;
+        }
         private List<Tenant> CreateRandomTenantList()
         {
             int randomCount = new IntRange(min: 2, max: 10).GetValue();
