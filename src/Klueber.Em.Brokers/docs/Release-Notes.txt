@@ -1,2 +1,4 @@
+v0.0.2
+    add Feature TenantService to retrieve Tenants and and their subscriptions.
 v0.0.1
     the first Broker to Handle the LuCA requests
