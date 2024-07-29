@@ -5,6 +5,7 @@ using Klueber.Em.Brokers.Brokers.Loggings;
 using Klueber.Em.Brokers.Clients;
 using Klueber.Em.Brokers.Services.Luca;
 using Klueber.Em.Brokers.Services.Product;
+using Klueber.Em.Brokers.Services.Tenant;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -24,7 +25,7 @@ namespace Klueber.Em.Brokers
             configureHttpMessageHandler?.Invoke(httpClientBuilder);
 
             services.AddEmBrokerServices();
-            
+
             return services;
         }
 
@@ -32,6 +33,7 @@ namespace Klueber.Em.Brokers
         {
             services.AddScoped<ILucaService, LucaService>();
             services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<ITenantService, TenantService>();
 
             services.AddScoped<ILogger, Logger<LoggingBroker>>();
             services.AddScoped<ILoggingBroker, LoggingBroker>();
